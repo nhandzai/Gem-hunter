@@ -113,6 +113,12 @@ def solve(map_data: list, formula):
                 else:
                     map_data[x][y] = 'T' if key == i else 'G'
                 
+    # in case there are cells with no adjacent number
+    for i in range(0, len(map_data)):
+        for j in range(0, len(map_data[0])):
+            if map_data[i][j] == '_':
+                map_data[i][j] = 'G'
+                
     print(f'Solution:')
     for row in map_data:
         print(row)
