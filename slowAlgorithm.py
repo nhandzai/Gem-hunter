@@ -24,17 +24,23 @@ def checker(map_data, pos):
     return True
 
 
-def multiCheck(map_data, pos):
+def multiCheck(map_data, pos, symbol):
     top = max(0, pos[0]-1)
     bot = min(len(map_data)-1, pos[0]+1)
     left = max(0, pos[1]-1)
     right = min(len(map_data[0])-1, pos[1]+1)
+    not_number_count = 0
+    max_check_space = (bot+1)*(right+1)
     for i in range(top, bot+1):
         for j in range(left, right+1):
             check_pos = (i, j)
             if map_data[i][j].isdigit():
                 if (checker(map_data, check_pos) == False):
                     return False
+            else:
+                not_number_count += 1
+    if symbol == 'T' and not_number_count == max_check_space:
+        return False
     return True
 
 
@@ -45,7 +51,7 @@ def backTracking(map_data, empty_pos, step=0):
     i, j = empty_pos[step]
     for symbol in ('T', 'G'):
         map_data[i][j] = symbol
-        if multiCheck(map_data, (i, j)):
+        if multiCheck(map_data, (i, j), symbol):
             if backTracking(map_data, empty_pos, step + 1):
                 return True
 
@@ -55,7 +61,7 @@ def backTracking(map_data, empty_pos, step=0):
 
 def bruteForce(map_data, empty_pos, step=0):
     if step == len(empty_pos):
-        if all(multiCheck(map_data, pos) for pos in empty_pos):
+        if all(multiCheck(map_data, pos, map_data[pos[0]][pos[1]]) for pos in empty_pos):
             return True
         return False
 
@@ -75,7 +81,7 @@ def timer(func, map_data, empty_pos):
     return solvable, end - start
 
 def main():
-    path = 'testcases\\input1.txt'
+    path = 'testcases\\5x5.txt'
     map_data, empty_pos = ReadFile.read_map2(path)
 
     for row in map_data:
