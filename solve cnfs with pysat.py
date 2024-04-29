@@ -37,7 +37,10 @@ def generate_cnfs(map_data: list):
                 if len(empty_cells) < no_traps:
                     print("No solution")
                     quit()
-                    
+                
+                if len(empty_cells) == 0:
+                    continue
+                
                 f = None
                 atoms = []
                 clause = None
