@@ -2,7 +2,7 @@ from pysat.formula import *
 from pysat.solvers import *
 import ReadFile
 
-PATH = 'testcases\\input2.txt'
+PATH = 'testcases\\9x9.txt'
 
 class Cordinate():
     def __init__(self, x, y, m, n):
@@ -11,7 +11,7 @@ class Cordinate():
         self.left = max(y - 1, 0)
         self.right = min(y + 1, n - 1)   
 
-def generate_whatever_i_have_to(map_data: list):
+def generate_cnfs(map_data: list):
     m = len(map_data)
     n = len(map_data[0])
     formula = None
@@ -112,20 +112,15 @@ def solve(map_data: list, formula):
                     map_data[x][y] = 'G' if key == i else 'T'
                 else:
                     map_data[x][y] = 'T' if key == i else 'G'
-           
+                
     print(f'Solution:')
     for row in map_data:
         print(row)
 
 def main():
     map_data = ReadFile.read_map(PATH)
-    formula, cnfs = generate_whatever_i_have_to(map_data)
+    formula, cnfs = generate_cnfs(map_data)
     formula.clausify()
-
-    # temp = formula.export_vpool().id2obj
-    # for key, value in temp.items():
-    #     print(f"{key}: {value}")
-    # print()
 
     for i, cnf in enumerate(cnfs):
         print(f"{i + 1}: {cnf}")
