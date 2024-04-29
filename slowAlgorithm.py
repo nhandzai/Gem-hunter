@@ -1,5 +1,5 @@
 import ReadFile
-
+import time
 
 def checker(map_data, pos):
     count = 0
@@ -68,6 +68,11 @@ def bruteForce(map_data, empty_pos, step=0):
     map_data[i][j] = '_'
     return False
 
+def timer(func, map_data, empty_pos):
+    start = time.time()
+    solvable = func(map_data, empty_pos)
+    end = time.time()
+    return solvable, end - start
 
 def main():
     path = 'testcases\\input1.txt'
@@ -77,17 +82,20 @@ def main():
         print(row)
     print(' ')
 
-
-    if backTracking(map_data, empty_pos):
+    solvable, exe_time = timer(backTracking, map_data, empty_pos)
+    print(f"Execution time: {exe_time}")
+    if solvable:
         print("Back Tracking")
         for row in map_data:
             print(row)
         print(' ')    
     else:
         print("Cannot solve")
-    
-    if bruteForce(map_data,empty_pos):
-        print("Back Tracking")
+
+    solvable, exe_time = timer(bruteForce, map_data, empty_pos)
+    print(f"Execution time: {exe_time}")
+    if solvable:
+        print("Brute Force")
         for row in map_data:
             print(row)
         print(' ')
