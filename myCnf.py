@@ -1,3 +1,4 @@
+
 import ReadFile
 import time
 
@@ -32,32 +33,76 @@ def combinations(iterable, r):
         yield tuple(pool[i] for i in indices)
 
 
-def DPLL(symbols, cnfs, model):
-    def satisfies(cnfs, model):
+def Deepcopy (cnfs):
+    new_cnfs = []
+    for cnf in cnfs:
+        new_cnf = []
+        for subcnf in cnf:
+            new_subcnf = subcnf.copy()
+            new_cnf.append(new_subcnf)
+        new_cnfs.append(new_cnf)
+    return new_cnfs
+    
+def DPLL(symbols, cnfs, model,step):
+                    
+    def satisfies(cnfs, model,len_symbols):
+       # print(cnfs)
+        if not cnfs:
+            return True
+   
         for cnf in cnfs:
-            clause_satisfied = True
+          #  print("cnf tiep theo",cnf)
+            flag_none = False
+            clause_satisfied = None
             for subcnf in cnf:
-                for literal in subcnf:
+              #  i=0
+                for literal in subcnf[:]:
+                    #if i==0 and model!= {}:
+                    #    i=1
+                    #    last_key = list(model.keys())[-1]
+                       # print("last key",last_key)
+                     #   print("last key",last_key)
+                        #print("literal",literal,"last key",last_key)
+                    #    if(literal > last_key or -literal > last_key):
+                          #  print("1")
+                     #       return None
+
                     if literal in model:
                         if model[literal]:
                             clause_satisfied = True
+                       
+                            subcnf.remove(literal)
+                          
+
                         else:
                             clause_satisfied = False
                             break
                     elif -literal in model:
                         if model[-literal] == False:
                             clause_satisfied = True
+                            subcnf.remove(literal)
+
+ 
+                           
                         else:
                             clause_satisfied = False
                             break
                     else:
-                        return None
+                        flag_none = True
+
 
                 if clause_satisfied:
                     break
-            if clause_satisfied == False:
+            if clause_satisfied == False and flag_none == False:
                 return False
+            if clause_satisfied == True and flag_none == False:
+                #xoa cnf neu cnf = True
+                cnfs.remove(cnf)
+           #     print("cnf bi xoa",cnf)
+        if len_symbols != len(model):
+            return None
         return True
+    
 
     def unit_clauses(symbols, model):
         unit = []
@@ -71,28 +116,23 @@ def DPLL(symbols, cnfs, model):
         new_model[literal] = value
         return new_model
 
-    def DPLL_algorithm(symbols, cnfs, model):
-        if satisfies(cnfs, model) == True:
-            return model
-        if satisfies(cnfs, model) == False:
-            return None
-        unit = unit_clauses(symbols, model)
-        literal = None
-        if len(unit) > 0:
-            literal = unit[0]
-        if literal is not None:
-            model = extend(model, literal, True)
-            result = DPLL_algorithm(symbols, cnfs, model)
-            if result is not None:
-                return result
-            model = extend(model, literal, False)
-            result = DPLL_algorithm(symbols, cnfs, model)
-            if result is not None:
-                return result
+    def DPLL_algorithm(symbols, cnfs, model,step):
+        satisfied = satisfies(cnfs, model,len(symbols))
 
+        if satisfied== True:
+
+            return model
+        if satisfied == False:
+            return None
+        if step[1] is not None:
+            model = extend(model, symbols[step[0]], step[1])
+        new_cnfs = Deepcopy(cnfs)
+        result = DPLL_algorithm(symbols,new_cnfs, model,step=[step[0]+1,True]) or DPLL_algorithm(symbols, new_cnfs, model,step=[step[0]+1,False])
+        if result is not None:
+            return result
         return None
 
-    return DPLL_algorithm(symbols, cnfs, model)
+    return DPLL_algorithm(symbols, cnfs, model,step)
 
 
 def extract_symbols(cnfs):
@@ -103,8 +143,6 @@ def extract_symbols(cnfs):
                 if abs(literal) not in symbols:
                     symbols.add(abs(literal))
     return list(symbols)
-
-
 def generate_cnf(map_data):
     cnfs = []
 
@@ -157,22 +195,26 @@ def generate_cnf(map_data):
 
 def solve(map_data, cnfs, n):
     model = {}
+    
     symbols = extract_symbols(cnfs)
-    solution = DPLL(symbols, cnfs, model)
+    solution = DPLL(symbols, cnfs, model,[-1,None])
     if solution is not None:
         print("Solution:")
         for i in range(len(map_data)):
             for j in range(len(map_data[0])):
-                if map_data[i][j] == '_':
-                    if solution[i*n + j + 1] == True:
-                        map_data[i][j] = 'T'
+               if map_data[i][j] == '_':
+                    if  i*n + j + 1 in solution:
+                        if  solution[ i*n + j + 1] == True:
+                            map_data[i][j] = 'T'
+                        else:
+                            map_data[i][j] = 'G'
                     else:
-                        map_data[i][j] = 'G'
+                        map_data[i][j] = '_'
             print(map_data[i])
     else:
         print("No solution")
 
-PATH = 'testcases\\input1.txt'
+PATH = 'testcases\\input2.txt'
 def main():
     
     map_data = ReadFile.read_map(PATH)
@@ -182,6 +224,7 @@ def main():
     solve(map_data, cnfs, n)
     end = time.time()
     print(end-start)
+    
 
 
 if __name__ == '__main__':
