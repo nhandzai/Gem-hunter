@@ -1,8 +1,7 @@
 from pysat.formula import *
 from pysat.solvers import *
 import ReadFile
-
-PATH = 'testcases\\9x9.txt'
+import time
 
 class Cordinate():
     def __init__(self, x, y, m, n):
@@ -94,8 +93,11 @@ def generate_cnfs(map_data: list):
     return formula, cnfs
 
 def solve(map_data: list, formula):
+    start = time.time()
     solver = Solver(bootstrap_with=formula)
-    if solver.solve() == False:
+    solvable = solver.solve()
+    end = time.time()
+    if solvable == False:
         print("cant solve")
         quit()
     
@@ -115,22 +117,31 @@ def solve(map_data: list, formula):
                     map_data[x][y] = 'G' if key == i else 'T'
                 else:
                     map_data[x][y] = 'T' if key == i else 'G'
-                
-    print(f'Solution:')
-    for row in map_data:
-        print(row)
+                    
+    return end - start
+
+PATH = 'testcases\\20x20.txt'
 
 def main():
     map_data = ReadFile.read_map(PATH)
+    start1 = time.time()
     formula, cnfs = generate_cnfs(map_data)
     formula.clausify()
+    end1 = time.time()
+    time1 = end1 - start1
 
     for i, cnf in enumerate(cnfs):
         print(f"{i + 1}: {cnf}")
         print()
     print()
-
-    solve(map_data, formula)
+    
+    time2 = solve(map_data, formula)
+    
+    print(f'Solution:')
+    for row in map_data:
+        print(row)
+        
+    print(time2 + time1)
     
 if __name__ == '__main__':
     main()
