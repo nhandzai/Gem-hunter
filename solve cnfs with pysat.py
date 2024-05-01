@@ -59,36 +59,52 @@ def generate_cnfs(map_data: list):
                         clause = clause & atoms[_]   
                         if atoms[_] not in cnfs:
                             cnfs.append(atoms[_])
-                    f = clause
+                    
+                    if formula is None:
+                        formula = clause
+                    else:
+                        formula = formula & clause
                         
                 else:
-                    for comb in itertools.combinations(empty_cells, no_traps):
-                        # comb is a possible combination of cells that are traps
-                        traps = list(comb)
-                        gems = [cell for cell in empty_cells if cell not in traps]
+                    # at most k of empty_cells contain a trap
+                    number = no_traps + 1
+                    for comb in itertools.combinations(empty_cells, number):
+                        cells = list(comb)
                         atoms = []
                         
-                        for trap in traps:
-                            atoms.append(Atom('x_{}_{}'.format(trap[0], trap[1])))
-                        for gem in gems:
-                            atoms.append(Neg(Atom('x_{}_{}'.format(gem[0], gem[1]))))
+                        for cell in cells:
+                            atoms.append(Neg(Atom('x_{}_{}'.format(cell[0], cell[1]))))
                             
-                        clause = And(atoms[0])
+                        clause = Or(atoms[0])
                         for _ in range(1, len(atoms)):
-                            clause = clause & atoms[_]
-                            
-                        if f is None:
-                            f = clause
+                            clause = clause | atoms[_]
+                    
+                        if formula is None:
+                            formula = clause
                         else:
-                            f = f | clause
+                            formula = formula & clause
                             
-                if formula is None:
-                    formula = f
-                else: 
-                    formula = formula & f
-
-                if no_traps != 0:
-                    cnfs.append(f)
+                        cnfs.append(clause)
+                            
+                    # at least k of emtpy_cells contains a trap
+                    number = len(empty_cells) - no_traps + 1
+                    for comb in itertools.combinations(empty_cells, number):
+                        cells = list(comb)
+                        atoms = []
+                        
+                        for cell in cells:
+                            atoms.append(Atom('x_{}_{}'.format(cell[0], cell[1])))
+                            
+                        clause = Or(atoms[0])
+                        for _ in range(1, len(atoms)):
+                            clause = clause | atoms[_]
+                            
+                        if formula is None:
+                            formula = clause
+                        else:
+                            formula = formula & clause
+                            
+                        cnfs.append(clause)
 
     return formula, cnfs
 
@@ -141,6 +157,8 @@ def main():
     for row in map_data:
         print(row)
         
+    print(time1)
+    print(time2)
     print(time2 + time1)
     
 if __name__ == '__main__':
