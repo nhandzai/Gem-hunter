@@ -1,6 +1,7 @@
 from pysat.formula import *
 from pysat.solvers import *
 import ReadFile
+import OutputFile
 import time
 
 class Cordinate():
@@ -86,7 +87,6 @@ def generate_cnfs(map_data: list):
                 if len(empty_cells) == 0:
                     continue
                 
-                f = None
                 atoms = []
                 clause = None
                 
@@ -155,7 +155,7 @@ def solve(map_data: list, formula):
     end = time.time()
     return end - start
 
-PATH = 'testcases\\20x20.txt'
+PATH = 'testcases\\5x5.txt'
 
 def main():
     map_data = ReadFile.read_map(PATH)
@@ -178,6 +178,8 @@ def main():
     print("Generating CNFs time: " + str(time1) + " s")
     print("Solving time: " + str(time2) + " s")
     print("Total time: " + str(time2 + time1) + " s")
+    
+    OutputFile.output_file(map_data, PATH)
     
 if __name__ == '__main__':
     main()
