@@ -3,10 +3,6 @@ import ReadFile
 import time
 import itertools
 import cProfile
-
-
-
-
 class Cordinate():
     def __init__(self, x, y, m, n):
         self.top = max(x - 1, 0)
@@ -75,26 +71,14 @@ def DPLL(symbols, cnfs, model,step,literal_info):
     def DPLL_algorithm(symbols, cnfs, model,step,last_key, literal_info):
         if cnfs == []:
             return model
-     #   print("cnfs",cnfs)
-       # for cnf in cnfs:
-        #    unassigned_literal = None
-         #   for literal in cnf:
-          #      if abs(literal) not in model:
-           ###        continue
-            #if unassigned_literal is None:
-             #   print("Unassigned literal is None")
-             #   return None
         new_cnfs = None
         if step[1] is not None:
             model,last_key = extend(model, symbols[step[0]], step[1])
             new_cnfs = satisfies(cnfs,model, last_key)
             if new_cnfs ==None:
                 return False
-            #print("lastKey",last_key)
-            #print("model",model)
         else:
             new_cnfs = Deepcopy(cnfs)
-        #print(last_key,literal_info[last_key][1],literal_info[last_key][0])
         if   step[1] == None or literal_info[abs(last_key)][1]<literal_info[abs(last_key)][0]:
             result = DPLL_algorithm(symbols,new_cnfs, model,step=[step[0]+1,False],last_key=last_key,literal_info=literal_info,) or DPLL_algorithm(symbols, new_cnfs, model,step=[step[0]+1,True],last_key=last_key,literal_info=literal_info,)
         else:
@@ -131,28 +115,35 @@ def Least_Digit(variables, k):
             temp.append(x)
         results.append(temp)
     return results
+def permutations(lst, n):
+    if n == 0:
+        yield []
+    else:
+        for i in range(len(lst)):
+            for perm in permutations(lst[:i] + lst[i+1:], n - 1):
+                yield [lst[i]] + perm
+
+def modified_function(cnf_instance):
+    new_cnf = []
+    for i, clause1 in enumerate(cnf_instance):
+        keep_clause = True
+        for j, clause2 in enumerate(cnf_instance):
+              if clause1 != clause2 and set(clause1) >= set(clause2):
+     #           print("false",clause1,clause2)
+                keep_clause = False
+                break
+    #    print("clause:",clause1,)
+        if keep_clause:
+   #         print("true",clause1)
+            new_cnf.append(clause1)
+    return new_cnf
+
 def simplify_cnf(cnf):
     # Loại bỏ các mệnh đề trùng lặp
-    cnf = [list(set(clause)) for clause in cnf]
-    cnf = [sorted(clause, key=abs) for clause in cnf]
-    cnf.sort()
-    cnf = list(clause for clause,_ in itertools.groupby(cnf))
-
-    # Loại bỏ các biến trùng lặp trong mỗi mệnh đề
-    for i in range(len(cnf)):
-        clause = cnf[i]
-        j = 0
-        while j < len(clause)-1:
-            if abs(clause[j]) == abs(clause[j+1]):
-                clause.pop(j)
-                clause.pop(j)
-                j = max(j-1, 0)
-            else:
-                j += 1
-        cnf[i] = clause
+    cnf = modified_function(cnf)
 
     return cnf
-def generate_cnf(map_data):
+def generate_cnf(map_data): 
     cnf = []
     literal_info = {}
     row = len(map_data)
@@ -181,7 +172,8 @@ def generate_cnf(map_data):
                     for clause in L_kn:
                         if clause not in cnf: 
                             cnf.append(clause)    
-  #  cnf = simplify_cnf(cnf)
+    print(cnf)
+    cnf = simplify_cnf(cnf)
     for clause in cnf:
         for literal in clause:
             abs_literal = abs(literal)
@@ -200,6 +192,7 @@ def generate_cnf(map_data):
    
 
 def solve(map_data, cnfs, n,literal_info):
+    
     model = {}
     symbols = extract_symbols(cnfs)
     #new_cnfs= simplify_cnf(cnfs)
