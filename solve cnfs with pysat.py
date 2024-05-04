@@ -148,14 +148,14 @@ def solve(map_data: list, formula):
             x, y = int(li[1]), int(li[2])
             if map_data[x][y] == '_':
                 if string[0] == '~':
-                    map_data[x][y] = 'G' if key == i else 'T'
+                    map_data[x][y] = 'G'
                 else:
-                    map_data[x][y] = 'T' if key == i else 'G'
+                    map_data[x][y] = 'T'
                     
     end = time.time()
     return end - start
 
-PATH = 'testcases\\5x5.txt'
+PATH = 'testcases\\20x20.txt'
 
 def main():
     map_data = ReadFile.read_map(PATH)
