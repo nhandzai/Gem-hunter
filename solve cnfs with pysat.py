@@ -11,6 +11,52 @@ class Cordinate():
         self.right = min(y + 1, n - 1)   
 
 def generate_cnfs(map_data: list):
+    def at_most_k(k, empty_cells, cnfs):
+        number = k + 1
+        f = None
+        for comb in itertools.combinations(empty_cells, number):
+            cells = list(comb)
+            atoms = []
+            
+            for cell in cells:
+                atoms.append(Neg(Atom('x_{}_{}'.format(cell[0], cell[1]))))
+                
+            clause = Or(atoms[0])
+            for _ in range(1, len(atoms)):
+                clause = clause | atoms[_]
+        
+            if f is None:
+                f = clause
+            else:
+                f = f & clause
+                
+            cnfs.append(clause)
+            
+        return f
+    
+    def at_least_k(k, n, empty_cells, cnfs):
+        number = n - k + 1
+        f = None
+        for comb in itertools.combinations(empty_cells, number):
+            cells = list(comb)
+            atoms = []
+            
+            for cell in cells:
+                atoms.append(Atom('x_{}_{}'.format(cell[0], cell[1])))
+                
+            clause = Or(atoms[0])
+            for _ in range(1, len(atoms)):
+                clause = clause | atoms[_]
+                
+            if f is None:
+                f = clause
+            else:
+                f = f & clause
+                
+            cnfs.append(clause)    
+            
+        return f
+    
     m = len(map_data)
     n = len(map_data[0])
     formula = None
@@ -66,45 +112,18 @@ def generate_cnfs(map_data: list):
                         formula = formula & clause
                         
                 else:
-                    # at most k of empty_cells contain a trap
-                    number = no_traps + 1
-                    for comb in itertools.combinations(empty_cells, number):
-                        cells = list(comb)
-                        atoms = []
-                        
-                        for cell in cells:
-                            atoms.append(Neg(Atom('x_{}_{}'.format(cell[0], cell[1]))))
-                            
-                        clause = Or(atoms[0])
-                        for _ in range(1, len(atoms)):
-                            clause = clause | atoms[_]
-                    
-                        if formula is None:
-                            formula = clause
-                        else:
-                            formula = formula & clause
-                            
-                        cnfs.append(clause)
-                            
-                    # at least k of emtpy_cells contains a trap
-                    number = len(empty_cells) - no_traps + 1
-                    for comb in itertools.combinations(empty_cells, number):
-                        cells = list(comb)
-                        atoms = []
-                        
-                        for cell in cells:
-                            atoms.append(Atom('x_{}_{}'.format(cell[0], cell[1])))
-                            
-                        clause = Or(atoms[0])
-                        for _ in range(1, len(atoms)):
-                            clause = clause | atoms[_]
-                            
-                        if formula is None:
-                            formula = clause
-                        else:
-                            formula = formula & clause
-                            
-                        cnfs.append(clause)
+                    f1 = at_most_k(no_traps, empty_cells, cnfs)
+                    f2 = at_least_k(no_traps, len(empty_cells), empty_cells, cnfs)
+                    if formula is None:
+                        if f1 is not None:
+                            formula = f1
+                        if f2 is not None:
+                            formula = formula & f2 if formula is not None else f2
+                    else:
+                        if f1 is not None:
+                            formula = formula & f1
+                        if f2 is not None:
+                            formula = formula & f2
 
     return formula, cnfs
 
@@ -112,7 +131,6 @@ def solve(map_data: list, formula):
     start = time.time()
     solver = Solver(bootstrap_with=formula)
     solvable = solver.solve()
-    end = time.time()
     if solvable == False:
         print("cant solve")
         quit()
@@ -134,6 +152,7 @@ def solve(map_data: list, formula):
                 else:
                     map_data[x][y] = 'T' if key == i else 'G'
                     
+    end = time.time()
     return end - start
 
 PATH = 'testcases\\20x20.txt'
@@ -142,7 +161,6 @@ def main():
     map_data = ReadFile.read_map(PATH)
     start1 = time.time()
     formula, cnfs = generate_cnfs(map_data)
-    formula.clausify()
     end1 = time.time()
     time1 = end1 - start1
 
@@ -157,9 +175,9 @@ def main():
     for row in map_data:
         print(row)
         
-    print(time1)
-    print(time2)
-    print(time2 + time1)
+    print("Generating CNFs time: " + str(time1) + " s")
+    print("Solving time: " + str(time2) + " s")
+    print("Total time: " + str(time2 + time1) + " s")
     
 if __name__ == '__main__':
     main()
