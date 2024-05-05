@@ -221,7 +221,6 @@ def solve(map_data, cnfs, n):
                             map_data[i][j] = 'G'
                     else:
                         map_data[i][j] = '_'
-            print(map_data[i])
     else:
         print("No solution")
 PATH = 'testcases\\5x5.txt'
