@@ -1,4 +1,5 @@
 import ReadFile
+import OutputFile
 import time
 
 def checker(map_data, pos):
@@ -75,7 +76,7 @@ def timer(func, map_data, empty_pos):
     return solvable, end - start
 
 def main():
-    path = 'testcases\\5x5.txt'
+    path = 'testcases\\15x15.txt'
     map_data, empty_pos = ReadFile.read_map2(path)
 
     for row in map_data:
@@ -88,9 +89,11 @@ def main():
         print("Back Tracking")
         for row in map_data:
             print(row)
-        print(' ')    
+        print(' ')
+        OutputFile.output_file(map_data, path)            
     else:
         print("Cannot solve")
+    
     
     map_data, empty_pos = ReadFile.read_map2(path)
     solvable, exe_time = timer(bruteForce, map_data, empty_pos)
@@ -99,7 +102,7 @@ def main():
         print("Brute Force")
         for row in map_data:
             print(row)
-        print(' ')
+        print(' ')  
     else:
         print("Cannot solve")
 
