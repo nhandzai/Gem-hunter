@@ -75,7 +75,7 @@ def timer(func, map_data, empty_pos):
     return solvable, end - start
 
 def main():
-    path = 'testcases\\input1.txt'
+    path = 'testcases\\5x5.txt'
     map_data, empty_pos = ReadFile.read_map2(path)
 
     for row in map_data:
@@ -91,7 +91,8 @@ def main():
         print(' ')    
     else:
         print("Cannot solve")
-
+    
+    map_data, empty_pos = ReadFile.read_map2(path)
     solvable, exe_time = timer(bruteForce, map_data, empty_pos)
     print(f"Execution time: {exe_time}")
     if solvable:

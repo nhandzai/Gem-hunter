@@ -1,8 +1,8 @@
-
 import ReadFile
+import OutputFile
 import time
-import itertools
-import cProfile
+
+
 class Cordinate():
     def __init__(self, x, y, m, n):
         self.top = max(x - 1, 0)
@@ -12,10 +12,9 @@ class Cordinate():
 
 
 def combinations(iterable, r):
-    # Generate combinations of size r from iterable
     pool = tuple(iterable)
     n = len(pool)
-    if r > n:
+    if r > n: 
         return
     indices = list(range(r))
     yield tuple(pool[i] for i in indices)
@@ -42,7 +41,7 @@ def Deepcopy (cnfs):
     
 def DPLL(symbols, cnfs, model,step,literal_info):
         
-    def satisfies(cnfs,model,last_key ):
+    def satisfies(cnfs,last_key ):
         new_cnfs=[]
         for cnf in cnfs:
             new_cnf=[]
@@ -74,15 +73,16 @@ def DPLL(symbols, cnfs, model,step,literal_info):
         new_cnfs = None
         if step[1] is not None:
             model,last_key = extend(model, symbols[step[0]], step[1])
-            new_cnfs = satisfies(cnfs,model, last_key)
+            new_cnfs = satisfies(cnfs, last_key)
             if new_cnfs ==None:
                 return False
         else:
             new_cnfs = Deepcopy(cnfs)
+
         if   step[1] == None or literal_info[abs(last_key)][1]<literal_info[abs(last_key)][0]:
-            result = DPLL_algorithm(symbols,new_cnfs, model,step=[step[0]+1,False],last_key=last_key,literal_info=literal_info,) or DPLL_algorithm(symbols, new_cnfs, model,step=[step[0]+1,True],last_key=last_key,literal_info=literal_info,)
+            result = DPLL_algorithm(symbols,new_cnfs, model,step=[step[0]+1,False],last_key=last_key,literal_info=literal_info) or DPLL_algorithm(symbols, new_cnfs, model,step=[step[0]+1,True],last_key=last_key,literal_info=literal_info)
         else:
-            result = DPLL_algorithm(symbols,new_cnfs, model,step=[step[0]+1,True],last_key=last_key,literal_info=literal_info,) or DPLL_algorithm(symbols, new_cnfs, model,step=[step[0]+1,False],last_key=last_key,literal_info=literal_info,)
+            result = DPLL_algorithm(symbols,new_cnfs, model,step=[step[0]+1,True],last_key=last_key,literal_info=literal_info) or DPLL_algorithm(symbols, new_cnfs, model,step=[step[0]+1,False],last_key=last_key,literal_info=literal_info)
         if result is not None:
 
             return result
@@ -98,7 +98,7 @@ def extract_symbols(cnfs):
             if abs(literal) not in symbols:
                 symbols.add(abs(literal))
     return list(symbols)
-def Most_Digit(variables, k):
+def U_Function(variables, k):
     results = []
     for comb in combinations(variables, k + 1):
         temp = []
@@ -107,7 +107,7 @@ def Most_Digit(variables, k):
         results.append(temp)
     return results
 
-def Least_Digit(variables, k):
+def L_Function(variables, k):
     results = []
     for comb in combinations(variables, len(variables) - k + 1):
         temp = []
@@ -122,63 +122,73 @@ def permutations(lst, n):
         for i in range(len(lst)):
             for perm in permutations(lst[:i] + lst[i+1:], n - 1):
                 yield [lst[i]] + perm
-
-def modified_function(cnf_instance):
+def simplify_function(cnf):
     new_cnf = []
-    for i, clause1 in enumerate(cnf_instance):
+    unit_clause = []
+    for clause1 in cnf:
         keep_clause = True
-        for j, clause2 in enumerate(cnf_instance):
+        for clause2 in cnf:
               if clause1 != clause2 and set(clause1) >= set(clause2):
-     #           print("false",clause1,clause2)
                 keep_clause = False
                 break
-    #    print("clause:",clause1,)
         if keep_clause:
-   #         print("true",clause1)
             new_cnf.append(clause1)
-    return new_cnf
+            if len(clause1) == 1:
+                unit_clause.append(clause1[0])
+    new_cnfs = []
+    for clause in cnf:
+            new_clause=[]
+            for literal in clause:
+                if literal in unit_clause :
+                    new_clause=None
+                    break
+                if -literal in unit_clause:
+                    continue
+                new_clause.append(literal)
+            if new_clause != None:
+                new_cnfs.append(new_clause)
+    return new_cnfs,unit_clause
 
-def simplify_cnf(cnf):
-    # Loại bỏ các mệnh đề trùng lặp
-    cnf = modified_function(cnf)
-
-    return cnf
 def generate_cnf(map_data): 
     cnf = []
-    literal_info = {}
     row = len(map_data)
     col = len(map_data[0])    
     for i in range(row):
         for j in range(col):
-            if map_data[i][j] != '_':
-                digit_ = int(map_data[i][j])
-                valid_cell = []
+            if map_data[i][j].isdigit():
+                no_traps = int(map_data[i][j])
+                empty_cells = []
                 for x in [-1, 0, 1]:
                     for y in [-1, 0, 1]:
                         if x != 0 or y != 0:
-                            ix, jy = i + x, j + y
-                            if 0 <= ix < row and 0 <= jy < col:
-                                if map_data[ix][jy] == '_':
-                                    valid_cell.append(ix*col + jy + 1)
+                            x_, y_ = i + x, j + y
+                            if 0 <= x_ < row and 0 <= y_ < col:
+                                if map_data[x_][y_] == '_':
+                                    empty_cells.append(x_*col + y_ + 1)
                 
-                if (digit_ == len(valid_cell)):
-                    for cell in valid_cell:
-                        cnf.append([cell])
-                else:
-                    U_kn = Most_Digit(valid_cell, digit_)
-                    L_kn = Least_Digit(valid_cell, digit_)
+                if (no_traps != len(empty_cells)):
+                    U_kn = U_Function(empty_cells, no_traps)
+                    L_kn = L_Function(empty_cells, no_traps)
                     for clause in U_kn:
                             cnf.append(clause)
                     for clause in L_kn:
                         if clause not in cnf: 
-                            cnf.append(clause)    
-    print(cnf)
-    cnf = simplify_cnf(cnf)
+                            cnf.append(clause)      
+                else:
+                    for cell in empty_cells:
+                        cnf.append([cell])   
+
+              
+    return cnf
+def simplify_cnfs(cnf):
+    cnf,unit_clause = simplify_function(cnf)
+    literal_info = {}
     for clause in cnf:
         for literal in clause:
+
             abs_literal = abs(literal)
             if abs_literal not in literal_info:
-                literal_info[abs_literal] = [0, 0,]  # [Số lần, Số lần âm, Số lần dương]
+                literal_info[abs_literal] = [0, 0]  # [Số lần, Số lần âm, Số lần dương]
 
             if literal > 0:
                 literal_info[abs_literal][1] += 1
@@ -186,18 +196,20 @@ def generate_cnf(map_data):
                 literal_info[abs_literal][0] += 1
     sorted_literal_info = sorted(literal_info.items(), key=lambda x: x[1][0] + x[1][1], reverse=True)
     sorted_literal_info_dict = {k: v for k, v in sorted_literal_info}
-   # print(literal_info)
-    print (sorted_literal_info)
-    return cnf, sorted_literal_info_dict
-   
-
-def solve(map_data, cnfs, n,literal_info):
-    
+    return cnf, sorted_literal_info_dict,unit_clause
+def create_model(unit_clause):
     model = {}
+    for clause in unit_clause:
+        if clause > 0:
+            model[clause] = True
+        else:
+            model[-clause] = False
+    return model
+def solve(map_data, cnfs, n):
+    cnfs,literal_info,unit_clause= simplify_cnfs(cnfs)
+    model = create_model(unit_clause)
     symbols = extract_symbols(cnfs)
-    #new_cnfs= simplify_cnf(cnfs)
     solution = DPLL(symbols, cnfs, model,[-1,None],literal_info)
-    
     if solution is not None:
         print("Solution:")
         for i in range(len(map_data)):
@@ -217,20 +229,22 @@ PATH = 'testcases\\20x20.txt'
 def main():
     
     map_data = ReadFile.read_map(PATH)
-    start = time.time()
-    cnfs,literal_info = generate_cnf(map_data)
+    start1 = time.time()
+    cnfs = generate_cnf(map_data)
+    end1 = time.time()
+    time1 = end1 - start1
+    start2 = time.time()
+   
     n = len(map_data[0])
-    solve(map_data, cnfs, n, literal_info)
-    end = time.time()
-    print(end-start)
-    #print(cnfs)
-#def profile_main():
- #   main()
+    solve(map_data, cnfs, n)
+    end2 = time.time()
+    time2 = end2 - start2
+    print("Generating CNFs time: " + str(time1) + " s")
+    print("Solving time: " + str(time2) + " s")
+    print("Total time: " + str(time2 + time1) + " s")
     
-
-
+    OutputFile.output_file(map_data, PATH)
 if __name__ == '__main__':
-  #  cProfile.run('profile_main()')
     main()
 
     
