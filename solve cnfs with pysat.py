@@ -11,56 +11,33 @@ class Cordinate():
         self.left = max(y - 1, 0)
         self.right = min(y + 1, n - 1)   
 
+def encode(x, y, z):
+    return x * z + y
+
+def decode(value, z):
+    return (value // z, value % z)
+
 def generate_cnfs(map_data: list):
-    def at_most_k(k, empty_cells, cnfs):
+    def at_most_k(k, empty_cells, z):
         number = k + 1
-        f = None
+        clause = []
         for comb in itertools.combinations(empty_cells, number):
             cells = list(comb)
-            atoms = []
-            
-            for cell in cells:
-                atoms.append(Neg(Atom('x_{}_{}'.format(cell[0], cell[1]))))
-                
-            clause = Or(atoms[0])
-            for _ in range(1, len(atoms)):
-                clause = clause | atoms[_]
-        
-            if f is None:
-                f = clause
-            else:
-                f = f & clause
-                
-            cnfs.append(clause)
-            
-        return f
+            clause.append([-encode(cell[0], cell[1], z) for cell in cells])
+        return clause
     
-    def at_least_k(k, n, empty_cells, cnfs):
+    def at_least_k(k, n, empty_cells, z):
         number = n - k + 1
-        f = None
+        clause = []
         for comb in itertools.combinations(empty_cells, number):
             cells = list(comb)
-            atoms = []
-            
-            for cell in cells:
-                atoms.append(Atom('x_{}_{}'.format(cell[0], cell[1])))
-                
-            clause = Or(atoms[0])
-            for _ in range(1, len(atoms)):
-                clause = clause | atoms[_]
-                
-            if f is None:
-                f = clause
-            else:
-                f = f & clause
-                
-            cnfs.append(clause)    
-            
-        return f
+            clause.append([encode(cell[0], cell[1], z) for cell in cells])     
+        return clause
     
     m = len(map_data)
     n = len(map_data[0])
-    formula = None
+    z = max(m, n)
+    formula = CNF()
     cnfs = []
     
     for i in range(0, m):
@@ -87,47 +64,29 @@ def generate_cnfs(map_data: list):
                 if len(empty_cells) == 0:
                     continue
                 
-                atoms = []
-                clause = None
-                
                 # generate cnfs
                 if no_traps == 0:
                     for cell in empty_cells:
-                        # all empty cells are gems
-                        atoms.append(Neg(Atom('x_{}_{}'.format(cell[0], cell[1]))))
-                        
-                    clause = And(atoms[0])
-                    
-                    if atoms[0] not in cnfs:
-                        cnfs.append(atoms[0])
-                        
-                    for _ in range(1, len(atoms)):
-                        clause = clause & atoms[_]   
-                        if atoms[_] not in cnfs:
-                            cnfs.append(atoms[_])
-                    
-                    if formula is None:
-                        formula = clause
-                    else:
-                        formula = formula & clause
+                        clause = [-encode(cell[0], cell[1], z)]
+                        formula.append(clause)
+                        if clause not in cnfs:
+                            cnfs.append([clause])
                         
                 else:
-                    f1 = at_most_k(no_traps, empty_cells, cnfs)
-                    f2 = at_least_k(no_traps, len(empty_cells), empty_cells, cnfs)
-                    if formula is None:
-                        if f1 is not None:
-                            formula = f1
-                        if f2 is not None:
-                            formula = formula & f2 if formula is not None else f2
-                    else:
-                        if f1 is not None:
-                            formula = formula & f1
-                        if f2 is not None:
-                            formula = formula & f2
+                    f1 = at_most_k(no_traps, empty_cells, z)
+                    f2 = at_least_k(no_traps, len(empty_cells), empty_cells, z)
+                    if len(f1) > 0:
+                        formula.extend(f1)
+                        if f1 not in cnfs:
+                            cnfs.append(f1)
+                    if len(f2) > 0:
+                        formula.extend(f2)
+                        if f2 not in cnfs:
+                            cnfs.append(f2)
 
     return formula, cnfs
 
-def solve(map_data: list, formula):
+def solve(map_data: list, formula: CNF):
     start = time.time()
     solver = Solver(bootstrap_with=formula)
     solvable = solver.solve()
@@ -135,27 +94,47 @@ def solve(map_data: list, formula):
         print("cant solve")
         quit()
     
-    id_name = formula.export_vpool().id2obj
+    m = len(map_data)
+    n = len(map_data[0])
+    z = max(m, n)
+    
     model = solver.get_model()
     for i in model:
-        if (i in id_name) or (-i in id_name):
-            key = i if i in id_name else -i
-            string = id_name[key].__str__()
-            if ('&' in string) or ('|') in string:
-                continue      
-            
-            li = string.split('_')
-            x, y = int(li[1]), int(li[2])
-            if map_data[x][y] == '_':
-                if string[0] == '~':
-                    map_data[x][y] = 'G'
-                else:
-                    map_data[x][y] = 'T'
+        key = abs(i)
+        x, y = decode(key, z)
+        
+        if map_data[x][y] == '_':
+            map_data[x][y] = 'G' if i < 0 else 'T'
                     
     end = time.time()
     return end - start
 
-PATH = 'testcases\\20x20.txt'
+def print_cnfs(cnfs, map_data):
+    m = len(map_data)
+    n = len(map_data[0])
+    z = max(m, n)
+    count = 1
+    
+    for cnf in cnfs:
+        for i in range(len(cnf)):
+            clause = ""
+            clause += '('
+            for j in range(len(cnf[i])):
+                value = cnf[i][j]
+                x, y = decode(abs(value), z)
+                if value < 0:
+                    clause += f"~x_{x}_{y}"
+                else:
+                    clause += f"x_{x}_{y}"
+                    
+                if j != len(cnf[i]) - 1:
+                    clause += ' | '
+                else:
+                    clause += ') '
+                    print(f"{count}: {clause}")
+                    count += 1
+
+PATH = 'testcases\\5x5.txt'
 
 def main():
     map_data = ReadFile.read_map(PATH)
@@ -163,13 +142,10 @@ def main():
     formula, cnfs = generate_cnfs(map_data)
     end1 = time.time()
     time1 = end1 - start1
-
-    for i, cnf in enumerate(cnfs):
-        print(f"{i + 1}: {cnf}")
-        print()
-    print()
     
     time2 = solve(map_data, formula)
+    
+    print_cnfs(cnfs, map_data)
     
     print(f'Solution:')
     for row in map_data:
