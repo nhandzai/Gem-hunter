@@ -211,7 +211,6 @@ def solve(map_data, cnfs, n):
     symbols = extract_symbols(cnfs)
     solution = DPLL(symbols, cnfs, model,[-1,None],literal_info)
     if solution is not None:
-        print("Solution:")
         for i in range(len(map_data)):
             for j in range(len(map_data[0])):
                if map_data[i][j] == '_':
@@ -222,7 +221,6 @@ def solve(map_data, cnfs, n):
                             map_data[i][j] = 'G'
                     else:
                         map_data[i][j] = '_'
-            print(map_data[i])
     else:
         print("No solution")
 PATH = 'testcases\\20x20.txt'
@@ -239,6 +237,11 @@ def main():
     solve(map_data, cnfs, n)
     end2 = time.time()
     time2 = end2 - start2
+    
+    print(f'Solution:')
+    for row in map_data:
+        print(row)
+            
     print("Generating CNFs time: " + str(time1) + " s")
     print("Solving time: " + str(time2) + " s")
     print("Total time: " + str(time2 + time1) + " s")
