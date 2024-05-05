@@ -42,7 +42,7 @@ def Deepcopy (cnfs):
     
 def DPLL(symbols, cnfs, model,step,literal_info):
         
-    def satisfies(cnfs,last_key ):
+    def shorten_cnf (cnfs,last_key ):
         new_cnfs=[]
         for cnf in cnfs:
             new_cnf=[]
@@ -74,7 +74,7 @@ def DPLL(symbols, cnfs, model,step,literal_info):
         new_cnfs = None
         if step[1] is not None:
             model,last_key = extend(model, symbols[step[0]], step[1])
-            new_cnfs = satisfies(cnfs, last_key)
+            new_cnfs = shorten_cnf(cnfs, last_key)
             if new_cnfs ==None:
                 return False
         else:
@@ -177,9 +177,7 @@ def generate_cnf(map_data):
                             cnf.append(clause)      
                 else:
                     for cell in empty_cells:
-                        cnf.append([cell])   
-
-              
+                        cnf.append([cell])     
     return cnf
 def simplify_cnfs(cnf):
     cnf,unit_clause = simplify_function(cnf)
@@ -226,7 +224,7 @@ def solve(map_data, cnfs, n):
             print(map_data[i])
     else:
         print("No solution")
-PATH = 'testcases\\20x20.txt'
+PATH = 'testcases\\5x5.txt'
 def main():
     
     map_data = ReadFile.read_map(PATH)
