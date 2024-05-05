@@ -133,8 +133,9 @@ def print_cnfs(cnfs, map_data):
                     clause += ') '
                     print(f"{count}: {clause}")
                     count += 1
-
-PATH = 'testcases\\5x5.txt'
+    print()
+    
+PATH = 'testcases\\20x20.txt'
 
 def main():
     map_data = ReadFile.read_map(PATH)
